@@ -19,16 +19,27 @@ const { startRecording, stopRecording, mediaBlobUrl, clearBlobUrl, isRecording }
   const [audioBlob, setAudioBlob] = useState(null);
 
   const sendAudioToBackend = async (audioBlob) => {
-    const formData = new FormData();
-    formData.append('audio', audioBlob);
-    
-    try {
-      const response = await axios.post('https://e-hospital-full.onrender.com/transcribe_stream', formData);
-      setPrescription(response.data.response);
-    } catch (err) {
-      setError('Failed to transcribe: ' + err.message);
-    }
-  };
+  if (!audioBlob) {
+    console.error("No audio data available.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("audio", audioBlob, "recording.wav");
+
+  try {
+    const response = await axios.post(
+      "https://e-hospital-full.onrender.com/transcribe_stream",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    setPrescription(response.data.response);
+  } catch (err) {
+    console.error("Failed to transcribe:", err);
+    setError("Failed to transcribe: " + err.message);
+  }
+};
+
 
   const handleTextSubmit = async (e) => {
     e.preventDefault();
