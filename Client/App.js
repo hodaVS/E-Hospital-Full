@@ -50,7 +50,7 @@ function App() {
     formData.append('audio', audioBlob);
     
     try {
-      const response = await axios.post('http://localhost:5000/transcribe_stream', formData);
+      const response = await axios.post('https://e-hospital-full.onrender.com/transcribe_stream', formData);
       setPrescription(response.data.response);
     } catch (err) {
       setError('Failed to transcribe: ' + err.message);
@@ -64,7 +64,7 @@ function App() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/chat', { text: input }, {
+      const response = await axios.post('https://e-hospital-full.onrender.com/chat', { text: input }, {
         headers: { 'Content-Type': 'application/json' },
       });
       console.log("Response from backend:", response.data);
@@ -121,7 +121,7 @@ function App() {
       formData.append('file', audioBlob.blob, 'recording.wav');
 
       // Send the audio file to the backend
-      const response = await axios.post('http://localhost:5000/transcribe', formData, {
+      const response = await axios.post('https://e-hospital-full.onrender.com/transcribe', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
