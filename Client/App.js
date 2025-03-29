@@ -1,49 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import { ReactMic } from 'react-mic'; // Import ReactMic
-import { FaMicrophone, FaStopCircle, FaPlayCircle, FaCheckCircle } from 'react-icons/fa'; // Import icons
-import './App.css'; // Import CSS for animations
+import { useMediaRecorder } from 'react-media-recorder';
+import { FaMicrophone, FaStopCircle, FaPlayCircle, FaCheckCircle } from 'react-icons/fa';
+import './App.css';
 
 function App() {
   const [input, setInput] = useState('');
   const [prescription, setPrescription] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // State for recording
-  const [audioBlob, setAudioBlob] = useState(null); // State to store recorded audio
-  const [isPlaying, setIsPlaying] = useState(false); // State for audio playback
-// In App.js
-  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const audioChunks = [];
-      
-      recorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
-      
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks);
-        await sendAudioToBackend(audioBlob);
-      };
-      
-      recorder.start(1000); // Send data every second
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-    } catch (err) {
-      setError('Could not access microphone: ' + err.message);
+  const {
+    startRecording,
+    stopRecording,
+    mediaBlobUrl,
+    clearBlobUrl,
+    isRecording
+  } = useMediaRecorder({
+    audio: true,
+    onStop: (blobUrl, blob) => {
+      setAudioBlob(blob);
     }
-  };
+  });
 
-  const stopRecording = () => {
-    if (mediaRecorder) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-    }
-  };
+  const [audioBlob, setAudioBlob] = useState(null);
 
   const sendAudioToBackend = async (audioBlob) => {
     const formData = new FormData();
@@ -56,7 +38,7 @@ function App() {
       setError('Failed to transcribe: ' + err.message);
     }
   };
-  // Handle text submission
+
   const handleTextSubmit = async (e) => {
     e.preventDefault();
     console.log("Sending text:", input);
@@ -84,28 +66,30 @@ function App() {
     }
   };
 
-  // Handle audio recording start/stop
   const handleRecording = () => {
-    setIsRecording(!isRecording);
-  };
-
-  // Handle audio data after recording stops
-  const onStop = (recordedBlob) => {
-    setAudioBlob(recordedBlob);
-  };
-
-  // Handle audio playback
-  const handlePlayback = () => {
-    if (audioBlob) {
-      const audioURL = URL.createObjectURL(audioBlob.blob);
-      const audio = new Audio(audioURL);
-      audio.play();
-      setIsPlaying(true);
-      audio.onended = () => setIsPlaying(false);
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+      setAudioBlob(null);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
     }
   };
 
-  // Handle audio submission
+  const handlePlayback = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   const handleAudioSubmit = async () => {
     if (!audioBlob) {
       setError("No audio recorded. Please record again.");
@@ -116,11 +100,9 @@ function App() {
     setError(null);
 
     try {
-      // Create a FormData object to send the audio file
       const formData = new FormData();
-      formData.append('file', audioBlob.blob, 'recording.wav');
+      formData.append('file', audioBlob, 'recording.wav');
 
-      // Send the audio file to the backend
       const response = await axios.post('https://e-hospital-full.onrender.com/transcribe', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -169,30 +151,38 @@ function App() {
           {isRecording ? <FaStopCircle /> : <FaMicrophone />}
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
-        <ReactMic
-          record={isRecording}
-          onStop={onStop}
-          mimeType="audio/wav"
-          strokeColor="#007bff"
-          backgroundColor="#f5f5f5"
-          visualSetting="sinewave" // Visual feedback for recording
-        />
-        {audioBlob && (
-          <div style={{ marginTop: '10px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-            <button
-              onClick={handlePlayback}
-              style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#28a745', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
-            >
-              <FaPlayCircle />
-              Play Audio
-            </button>
-            <button
-              onClick={handleAudioSubmit}
-              style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#28a745', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
-            >
-              <FaCheckCircle />
-              Submit Audio
-            </button>
+        
+        {/* Audio visualization placeholder */}
+        {isRecording && (
+          <div style={{ height: '100px', backgroundColor: '#f5f5f5', borderRadius: '5px', marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ color: '#007bff' }}>Recording in progress...</div>
+          </div>
+        )}
+
+        {mediaBlobUrl && (
+          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
+            <audio
+              src={mediaBlobUrl}
+              ref={audioRef}
+              onEnded={() => setIsPlaying(false)}
+              style={{ display: 'none' }}
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={handlePlayback}
+                style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#28a745', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+              >
+                {isPlaying ? <FaStopCircle /> : <FaPlayCircle />}
+                {isPlaying ? 'Stop Playback' : 'Play Audio'}
+              </button>
+              <button
+                onClick={handleAudioSubmit}
+                style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#28a745', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+              >
+                <FaCheckCircle />
+                Submit Audio
+              </button>
+            </div>
           </div>
         )}
       </div>
