@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useReactMediaRecorder } from 'react-media-recorder';
 import { FaMicrophone, FaStopCircle, FaPlayCircle, FaCheckCircle } from 'react-icons/fa';
@@ -10,9 +10,10 @@ function App() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
   const audioRef = useRef(null);
 
-const {
+  const {
     startRecording,
     stopRecording,
     mediaBlobUrl,
@@ -22,11 +23,9 @@ const {
   } = useReactMediaRecorder({
     audio: true,
     onStop: (blobUrl, blob) => {
-      // Some versions return blob directly, others need conversion
       if (blob) {
         setAudioBlob(blob);
       } else {
-        // If blob isn't provided, convert from blobUrl
         fetch(blobUrl)
           .then(res => res.blob())
           .then(blob => setAudioBlob(blob))
@@ -38,7 +37,6 @@ const {
     }
   });
 
-  // Handle recorder errors
   useEffect(() => {
     if (recorderError) {
       console.error("Recording error:", recorderError);
@@ -46,54 +44,17 @@ const {
     }
   }, [recorderError]);
 
-  const handleAudioSubmit = async () => {
-    if (!audioBlob) {
-      setError("No audio recorded. Please record again.");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.wav');
-
-      const response = await axios.post(
-        'https://e-hospital-full.onrender.com/transcribe',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      if (response.data.error) {
-        setError(response.data.error);
-        return;
-      }
-
-      setPrescription(response.data.response);
-    } catch (error) {
-      console.error("Error sending audio:", error);
-      setError("Failed to send audio. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleTextSubmit = async (e) => {
     e.preventDefault();
-    console.log("Sending text:", input);
     setError(null);
     setIsLoading(true);
 
     try {
-      const response = await axios.post('https://e-hospital-full.onrender.com/chat', { text: input }, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      console.log("Response from backend:", response.data);
+      const response = await axios.post(
+        'https://e-hospital-full.onrender.com/chat', 
+        { text: input }, 
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
       if (response.data.error) {
         setError(response.data.error);
@@ -145,13 +106,13 @@ const {
 
     try {
       const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.wav');
+      formData.append('audio', audioBlob, 'recording.wav');
 
-      const response = await axios.post('https://e-hospital-full.onrender.com/transcribe', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      console.log("Response from backend:", response.data);
+      const response = await axios.post(
+        'https://e-hospital-full.onrender.com/transcribe',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
 
       if (response.data.error) {
         setError(response.data.error);
@@ -172,7 +133,6 @@ const {
       <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Chatbot</h1>
       {error && <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>{error}</div>}
 
-      {/* Text Input Form */}
       <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
         <input
           type="text"
@@ -186,7 +146,6 @@ const {
         </button>
       </form>
 
-      {/* Audio Recording Section */}
       <div style={{ marginBottom: '20px', textAlign: 'center' }}>
         <button
           onClick={handleRecording}
@@ -196,7 +155,6 @@ const {
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
         
-        {/* Audio visualization placeholder */}
         {isRecording && (
           <div style={{ height: '100px', backgroundColor: '#f5f5f5', borderRadius: '5px', marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div style={{ color: '#007bff' }}>Recording in progress...</div>
@@ -231,7 +189,6 @@ const {
         )}
       </div>
 
-      {/* Loading Animation */}
       {isLoading && (
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           <div className="spinner"></div>
@@ -239,10 +196,10 @@ const {
         </div>
       )}
 
-      {/* Display Prescription */}
       {prescription && prescription.Prescriptions.map((prescription, index) => (
         <div key={index} style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
           <h2 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Prescription {index + 1}</h2>
+          
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ color: '#007bff', borderBottom: '2px solid #007bff', paddingBottom: '5px' }}>Diagnosis Information</h3>
             <p><strong>Diagnosis:</strong> {prescription.DiagnosisInformation.Diagnosis || "None"}</p>
