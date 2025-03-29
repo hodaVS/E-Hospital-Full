@@ -118,7 +118,7 @@ function App() {
       );
 
       if (response.data.error) {
-        setAudioError(response.data.error);
+        setError(response.data.error);
         return;
       }
 
@@ -128,7 +128,7 @@ function App() {
         error: error.message,
         response: error.response?.data
       });
-      setAudioError(error.response?.data?.message || "Audio submission failed");
+      setError(error.response?.data?.message || "Audio submission failed");
     } finally {
       setIsLoading(false);
     }
