@@ -12,18 +12,9 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
-  const {
-    startRecording,
-    stopRecording,
-    mediaBlobUrl,
-    clearBlobUrl,
-    isRecording
-  } = useMediaRecorder({
-    audio: true,
-    onStop: (blobUrl, blob) => {
-      setAudioBlob(blob);
-    }
-  });
+const { startRecording, stopRecording, mediaBlobUrl, clearBlobUrl, isRecording } =
+  useReactMediaRecorder({ audio: true });
+
 
   const [audioBlob, setAudioBlob] = useState(null);
 
