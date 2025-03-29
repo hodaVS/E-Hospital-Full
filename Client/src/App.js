@@ -12,34 +12,76 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
 
-const { startRecording, stopRecording, mediaBlobUrl, clearBlobUrl, isRecording } =
-  useReactMediaRecorder({ audio: true });
+const {
+    startRecording,
+    stopRecording,
+    mediaBlobUrl,
+    clearBlobUrl,
+    isRecording,
+    error: recorderError
+  } = useReactMediaRecorder({
+    audio: true,
+    onStop: (blobUrl, blob) => {
+      // Some versions return blob directly, others need conversion
+      if (blob) {
+        setAudioBlob(blob);
+      } else {
+        // If blob isn't provided, convert from blobUrl
+        fetch(blobUrl)
+          .then(res => res.blob())
+          .then(blob => setAudioBlob(blob))
+          .catch(err => {
+            console.error("Blob conversion error:", err);
+            setError("Failed to process recording");
+          });
+      }
+    }
+  });
 
+  // Handle recorder errors
+  useEffect(() => {
+    if (recorderError) {
+      console.error("Recording error:", recorderError);
+      setError(`Recording error: ${recorderError.message}`);
+    }
+  }, [recorderError]);
 
-  const [audioBlob, setAudioBlob] = useState(null);
+  const handleAudioSubmit = async () => {
+    if (!audioBlob) {
+      setError("No audio recorded. Please record again.");
+      return;
+    }
 
-  const sendAudioToBackend = async (audioBlob) => {
-  if (!audioBlob) {
-    console.error("No audio data available.");
-    return;
-  }
+    setIsLoading(true);
+    setError(null);
 
-  const formData = new FormData();
-  formData.append("audio", audioBlob, "recording.wav");
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.wav');
 
-  try {
-    const response = await axios.post(
-      "https://e-hospital-full.onrender.com/transcribe_stream",
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
-    setPrescription(response.data.response);
-  } catch (err) {
-    console.error("Failed to transcribe:", err);
-    setError("Failed to transcribe: " + err.message);
-  }
-};
+      const response = await axios.post(
+        'https://e-hospital-full.onrender.com/transcribe',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
+      if (response.data.error) {
+        setError(response.data.error);
+        return;
+      }
+
+      setPrescription(response.data.response);
+    } catch (error) {
+      console.error("Error sending audio:", error);
+      setError("Failed to send audio. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleTextSubmit = async (e) => {
     e.preventDefault();
