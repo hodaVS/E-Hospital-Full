@@ -17,9 +17,8 @@
     "web-vitals": "^2.1.4"
   },
 "scripts": {
-  "preinstall": "npm install --legacy-peer-deps",
-  "build": "npm install --legacy-peer-deps && react-scripts build",
-  "start": "react-scripts start"
+  "start": "react-scripts start",
+  "build": "react-scripts build",
 },
   "eslintConfig": {
     "extends": [
