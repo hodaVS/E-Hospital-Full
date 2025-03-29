@@ -13,59 +13,68 @@ function App() {
   const [audioBlob, setAudioBlob] = useState(null);
   const audioRef = useRef(null);
 
-  const {
+    const {
     startRecording,
     stopRecording,
     mediaBlobUrl,
-    clearBlobUrl,
     isRecording,
     error: recorderError
   } = useReactMediaRecorder({
     audio: true,
-    onStop: (blobUrl, blob) => {
-      if (blob) {
+    onStop: async (blobUrl) => {
+      try {
+        // Convert blob URL to actual blob
+        const response = await fetch(blobUrl);
+        const blob = await response.blob();
         setAudioBlob(blob);
-      } else {
-        fetch(blobUrl)
-          .then(res => res.blob())
-          .then(blob => setAudioBlob(blob))
-          .catch(err => {
-            console.error("Blob conversion error:", err);
-            setError("Failed to process recording");
-          });
+      } catch (err) {
+        console.error("Blob conversion failed:", err);
+        setError("Failed to process recording");
       }
     }
   });
 
-  useEffect(() => {
-    if (recorderError) {
-      console.error("Recording error:", recorderError);
-      setError(`Recording error: ${recorderError.message}`);
+  const handleAudioSubmit = async () => {
+    if (!audioBlob) {
+      setError("No audio recorded");
+      return;
     }
-  }, [recorderError]);
 
-  const handleTextSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
     setIsLoading(true);
+    setError(null);
 
     try {
+      const formData = new FormData();
+      
+
+      const audioFile = new File([audioBlob], 'recording.wav', {
+        type: 'audio/wav',
+        lastModified: Date.now()
+        });
+      formData.append('audio', audioFile);
+
       const response = await axios.post(
-        'https://e-hospital-full.onrender.com/chat', 
-        { text: input }, 
-        { headers: { 'Content-Type': 'application/json' } }
+        'https://e-hospital-full.onrender.com/transcribe',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 30000 // 30 seconds timeout
+        }
       );
 
       if (response.data.error) {
-        setError(response.data.error);
-        return;
+        throw new Error(response.data.error);
       }
 
       setPrescription(response.data.response);
-      setInput('');
     } catch (error) {
-      console.error("Error sending message:", error);
-      setError("Failed to send message. Please try again.");
+      console.error("Submission error:", {
+        error: error.message,
+        response: error.response?.data
+      });
+      setError(error.response?.data?.message || "Audio submission failed");
     } finally {
       setIsLoading(false);
     }
