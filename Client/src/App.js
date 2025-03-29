@@ -7,7 +7,8 @@ import './App.css';
 function App() {
   const [input, setInput] = useState('');
   const [prescription, setPrescription] = useState(null);
-  const [error, setError] = useState(null);
+  const [textError, setTextError] = useState(null);
+  const [audioError, setAudioError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
@@ -28,7 +29,7 @@ function App() {
         setAudioBlob(blob);
       } catch (err) {
         console.error("Blob conversion failed:", err);
-        setError("Failed to process recording");
+        setAudioError("Failed to process recording");
       }
     }
   });
@@ -36,7 +37,7 @@ function App() {
   useEffect(() => {
     if (recorderError) {
       console.error("Recording error:", recorderError);
-      setError(`Recording error: ${recorderError}`);
+      setAudioError(`Recording error: ${recorderError}`);
     }
   }, [recorderError]);
 
@@ -53,7 +54,7 @@ function App() {
       );
 
       if (response.data.error) {
-        setError(response.data.error);
+        setTextError(response.data.error);
         return;
       }
 
@@ -61,7 +62,7 @@ function App() {
       setInput('');
     } catch (error) {
       console.error("Error sending message:", error);
-      setError(error.response?.data?.message || "Failed to send message");
+      setTextError(error.response?.data?.message || "Failed to send message");
     } finally {
       setIsLoading(false);
     }
@@ -93,12 +94,12 @@ function App() {
 
   const handleAudioSubmit = async () => {
     if (!audioBlob) {
-      setError("No audio recorded. Please record again.");
+      setAudioError("No audio recorded. Please record again.");
       return;
     }
 
     setIsLoading(true);
-    setError(null);
+    setAudioError(null);
 
     try {
       const formData = new FormData();
@@ -118,7 +119,7 @@ function App() {
       );
 
       if (response.data.error) {
-        setError(response.data.error);
+        setAudioError(response.data.error);
         return;
       }
 
@@ -128,7 +129,7 @@ function App() {
         error: error.message,
         response: error.response?.data
       });
-      setError(error.response?.data?.message || "Audio submission failed");
+      setAudioError(error.response?.data?.message || "Audio submission failed");
     } finally {
       setIsLoading(false);
     }
