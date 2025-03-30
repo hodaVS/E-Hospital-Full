@@ -49,6 +49,11 @@ function App() {
     console.log('Current status:', status);
   }, [status]);
 
+  // Debug prescription state changes
+  useEffect(() => {
+    console.log('Prescription state updated:', prescription);
+  }, [prescription]);
+
   const requestMicPermission = async () => {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -72,6 +77,7 @@ function App() {
         { headers: { 'Content-Type': 'application/json' } }
       );
 
+      console.log("Text response:", response.data); // Debug response
       if (response.data.error) {
         setError(response.data.error);
         return;
@@ -116,60 +122,59 @@ function App() {
     }
   };
 
- const handleAudioSubmit = async () => {
+  const handleAudioSubmit = async () => {
     if (!audioBlob) {
-        setError("No audio recorded. Please record again.");
-        return;
+      setError("No audio recorded. Please record again.");
+      return;
     }
 
     setError(null);
     setIsLoading(true);
 
     try {
-        const formData = new FormData();
-        const audioFile = new File([audioBlob], 'recording.wav', {
-            type: 'audio/wav',
-            lastModified: Date.now()
-        });
-        formData.append('audio', audioFile);
+      const formData = new FormData();
+      const audioFile = new File([audioBlob], 'recording.wav', {
+        type: 'audio/wav',
+        lastModified: Date.now()
+      });
+      formData.append('audio', audioFile);
 
-        const response = await axios.post(
-            'https://e-hospital-full.onrender.com/transcribe_stream',
-            formData,
-            {
-                headers: { 'Content-Type': 'multipart/form-data' },
-                timeout: 60000
-            }
-        );
-
-        // Log server-side messages
-        console.log("Server logs:");
-        response.data.logs.forEach(log => console.log(log));
-
-        if (response.data.error) {
-            setError(`${response.data.error}: ${response.data.details || 'No details provided'}`);
-            return;
+      const response = await axios.post(
+        'https://e-hospital-full.onrender.com/transcribe_stream',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000
         }
+      );
 
-        setPrescription(response.data.response);
+      console.log("Audio response:", response.data); // Debug full response
+      response.data.logs.forEach(log => console.log("Server log:", log));
+
+      if (response.data.error) {
+        setError(`${response.data.error}: ${response.data.details || 'No details provided'}`);
+        return;
+      }
+
+      setPrescription(response.data.response);
     } catch (error) {
-        console.error("Submission failed:", {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status
-        });
-        if (error.response?.data?.logs) {
-            console.log("Server logs (error case):");
-            error.response.data.logs.forEach(log => console.log(log));
-        }
-        const errorMessage = error.response?.data?.error
-            ? `${error.response.data.error}: ${error.response.data.details || ''}`
-            : "Audio submission failed";
-        setError(errorMessage);
+      console.error("Submission failed:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      if (error.response?.data?.logs) {
+        console.log("Server logs (error case):");
+        error.response.data.logs.forEach(log => console.log(log));
+      }
+      const errorMessage = error.response?.data?.error
+        ? `${error.response.data.error}: ${error.response.data.details || ''}`
+        : "Audio submission failed";
+      setError(errorMessage);
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
@@ -294,11 +299,29 @@ function App() {
         </div>
       )}
 
-      {prescription && prescription.Prescriptions.map((prescription, index) => (
-        <div key={index} style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-          {/* Prescription rendering remains the same */}
+      {prescription && (
+        <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+          <h2 style={{ color: '#007bff' }}>Prescription</h2>
+          {prescription.Prescriptions && Array.isArray(prescription.Prescriptions) ? (
+            prescription.Prescriptions.map((item, index) => (
+              <div key={index} style={{ marginBottom: '15px' }}>
+                <h3>Prescription {index + 1}</h3>
+                <p><strong>Diagnosis:</strong> {item.DiagnosisInformation.Diagnosis || 'None'}</p>
+                <p><strong>Medicine:</strong> {item.DiagnosisInformation.Medicine || 'None'}</p>
+                <p><strong>Dose:</strong> {item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</p>
+                <p><strong>Route:</strong> {item.MedicationDetails.DoseRoute || 'None'}</p>
+                <p><strong>Frequency:</strong> {item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</p>
+                <p><strong>Quantity:</strong> {item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</p>
+                <p><strong>Refills:</strong> {item.MedicationDetails.Refill || 'None'}</p>
+                <p><strong>Pharmacy:</strong> {item.MedicationDetails.Pharmacy || 'None'}</p>
+                <p><strong>Description:</strong> {item.Description || 'None'}</p>
+              </div>
+            ))
+          ) : (
+            <p>No valid prescriptions available.</p>
+          )}
         </div>
-      ))}
+      )}
     </div>
   );
 }
