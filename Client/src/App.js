@@ -175,12 +175,21 @@ function App() {
     }
   };
 
-  const handleSave = () => {
-    // For now, just log the prescription to the console
-    console.log("Saving prescription:", prescription);
-    alert("Prescription saved to console (placeholder functionality)");
-    // You can extend this to download as a file or save to a backend if needed
-  };
+const handleSave = async (singlePrescription) => {
+  try {
+    const response = await axios.post(
+      'https://e-hospital-full.onrender.com/save_prescription',
+      { prescription: singlePrescription },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    console.log("Save response:", response.data);
+    alert(response.data.message || "Prescription saved successfully!");
+  } catch (error) {
+    console.error("Failed to save prescription:", error.response?.data);
+    setError(error.response?.data?.error || "Failed to save prescription");
+  }
+};
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
@@ -305,100 +314,99 @@ function App() {
         </div>
       )}
 
-      {prescription && (
-        <div style={{ marginTop: '20px' }}>
-          <h2 style={{ color: '#007bff', textAlign: 'center', marginBottom: '20px' }}>Prescriptions</h2>
-          {prescription.Prescriptions && Array.isArray(prescription.Prescriptions) ? (
-            <div>
-              {prescription.Prescriptions.map((item, index) => (
-                <table
-                  key={index}
-                  style={{
-                    width: '100%',
-                    marginBottom: '20px',
-                    borderCollapse: 'collapse',
-                    backgroundColor: '#fff',
-                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                    borderRadius: '10px',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <thead>
-                    <tr>
-                      <th colSpan="2" style={{ backgroundColor: '#007bff', color: '#fff', padding: '10px', textAlign: 'center', fontSize: '18px' }}>
-                        Prescription {index + 1}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd', width: '30%' }}>Diagnosis</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Diagnosis || 'None'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Medicine</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Medicine || 'None'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Dose</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Route</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.DoseRoute || 'None'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Frequency</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Quantity</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Refills</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Refill || 'None'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Pharmacy</td>
-                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Pharmacy || 'None'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Description</td>
-                      <td style={{ padding: '10px' }}>{item.Description || 'None'}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              ))}
-              <button
-                onClick={handleSave}
-                style={{
-                  padding: '10px 20px',
-                  fontSize: '16px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  backgroundColor: '#17a2b8',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  margin: '20px auto',
-                  transition: 'background-color 0.3s ease'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#138496'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#17a2b8'}
-              >
-                <FaSave /> Save Prescription
-              </button>
-            </div>
-          ) : (
-            <p style={{ textAlign: 'center' }}>No valid prescriptions available.</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+
+{prescription && (
+  <div style={{ marginTop: '20px' }}>
+    <h2 style={{ color: '#007bff', textAlign: 'center', marginBottom: '20px' }}>Prescriptions</h2>
+    {prescription.Prescriptions && Array.isArray(prescription.Prescriptions) ? (
+      <div>
+        {prescription.Prescriptions.map((item, index) => (
+          <div key={index} style={{ marginBottom: '20px' }}>
+            <table
+              style={{
+                width: '100%',
+                marginBottom: '20px',
+                borderCollapse: 'collapse',
+                backgroundColor: '#fff',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                borderRadius: '10px',
+                overflow: 'hidden'
+              }}
+            >
+              <thead>
+                <tr>
+                  <th colSpan="2" style={{ backgroundColor: '#007bff', color: '#fff', padding: '10px', textAlign: 'center', fontSize: '18px' }}>
+                    Prescription {index + 1}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd', width: '30%' }}>Diagnosis</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Diagnosis || 'None'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Medicine</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Medicine || 'None'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Dose</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Route</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.DoseRoute || 'None'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Frequency</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Quantity</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Refills</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Refill || 'None'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Pharmacy</td>
+                  <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Pharmacy || 'None'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '10px', fontWeight: 'bold' }}>Description</td>
+                  <td style={{ padding: '10px' }}>{item.Description || 'None'}</td>
+                </tr>
+              </tbody>
+            </table>
+            <button
+              onClick={() => handleSave(item)}
+              style={{
+                padding: '10px 20px',
+                fontSize: '16px',
+                borderRadius: '5px',
+                border: 'none',
+                backgroundColor: '#17a2b8',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                margin: '0 auto',
+                transition: 'background-color 0.3s ease'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#138496'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#17a2b8'}
+            >
+              <FaSave /> Save Prescription
+            </button>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p style={{ textAlign: 'center' }}>No valid prescriptions available.</p>
+    )}
+  </div>
+)}
 
 export default App;
