@@ -5,6 +5,8 @@ import os
 from openai import OpenAI
 import json
 import logging
+import sqlite3
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +19,18 @@ client = OpenAI(api_key=api_key)
 app = Flask(__name__)
 CORS(app)  
 
+
+def init_db():
+    conn = sqlite3.connect('/data/prescriptions.db' if os.getenv("RENDER") else 'prescriptions.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS prescriptions
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  prescription TEXT NOT NULL,
+                  timestamp TEXT NOT NULL)''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 
 def transcribe_audio(file_path):
@@ -441,6 +455,32 @@ def transcribe():
                 ]
             }
         })
+
+
+@app.route('/save_prescription', methods=['POST'])
+def save_prescription():
+    data = request.json
+    if not data or 'prescription' not in data:
+        logger.error("No prescription data provided")
+        return jsonify({"error": "No prescription data provided"}), 400
+
+    prescription = data['prescription']
+    try:
+        conn = sqlite3.connect('/data/prescriptions.db' if os.getenv("RENDER") else 'prescriptions.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO prescriptions (prescription, timestamp) VALUES (?, ?)",
+                  (json.dumps(prescription), datetime.now().isoformat()))
+        conn.commit()
+        conn.close()
+
+        logger.info(f"Prescription saved successfully: {prescription}")
+        return jsonify({"message": f"Prescription for {prescription['DiagnosisInformation']['Medicine']} saved successfully"}), 200
+
+    except Exception as e:
+        logger.error(f"Failed to save prescription: {str(e)}")
+        return jsonify({"error": "Failed to save prescription", "details": str(e)}), 500
+
+
 
 # Run the Flask app
 if __name__ == '__main__':
