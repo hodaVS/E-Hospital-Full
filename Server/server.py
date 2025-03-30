@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 import json
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -66,75 +71,89 @@ conversation_history = [
 @app.route('/transcribe_stream', methods=['POST'])
 def transcribe_stream():
     if 'audio' not in request.files:
-        return jsonify({"error": "No audio file provided"}), 400
+        logger.error("No audio file provided")
+        return jsonify({"error": "No audio file provided", "logs": ["No audio file provided"]}), 400
 
     audio_file = request.files['audio']
-    print(f"Audio file name: {audio_file.filename}")
-    try:
-        # Transcribe the audio stream directly
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
-        )
-        user_input = transcript.text
-        # print("Transcribed Text:", user_input)
+    logs = [f"Received audio file: {audio_file.filename}"]
 
-        # Generate prescription from transcribed text
+    try:
+        # Save the file temporarily to ensure compatibility
+        temp_path = "temp_audio.wav"
+        audio_file.save(temp_path)
+        logs.append("Audio file saved to temp path")
+
+        # Rewind the file stream (optional, for debugging)
+        audio_file.seek(0)
+
+        # Try transcription
+        logger.info("Attempting Whisper transcription")
+        with open(temp_path, "rb") as f:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f
+            )
+        user_input = transcript.text
+        logs.append(f"Transcribed text: {user_input}")
+
+        # Clean up temp file
+        os.remove(temp_path)
+        logs.append("Temporary file removed")
+
+        # Generate prescription
         system_message = {
             "role": "system",
-            "content": conversation_history[0]["content"]
+            "content": "You are a helpful assistant that generates prescriptions. Always return the prescription in the following JSON format: (Warn doctor in Description if you suspect any drug conflicts). If any information is missing, use 'None' as the value for that field."
+                       "{ \"Prescriptions\": [ { \"DiagnosisInformation\": { \"Diagnosis\": \"<diagnosis>\", \"Medicine\": \"<medicine>\" }, \"MedicationDetails\": { \"Dose\": \"<dose>\", \"DoseUnit\": \"<dose unit>\", \"DoseRoute\": \"<dose route>\", \"Frequency\": \"<frequency>\", \"FrequencyDuration\": \"<frequency duration>\", \"FrequencyUnit\": \"<frequency unit>\", \"Quantity\": \"<quantity>\", \"QuantityUnit\": \"<quantity unit>\", \"Refill\": \"<refill>\", \"Pharmacy\": \"<pharmacy>\" }, \"Description\": \"<description>\" } ] }"
         }
 
+        logger.info("Requesting GPT-4 completion")
         completion = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4",  # Try "gpt-3.5-turbo" if gpt-4 fails
             messages=[system_message, {"role": "user", "content": user_input}],
             max_tokens=500,
             temperature=0.1
         )
 
         gpt_response = completion.choices[0].message.content.strip()
-        # print("OpenAI Response:", gpt_response)
+        logs.append(f"GPT-4 response: {gpt_response}")
 
-        # Handle potential JSON formatting issues
+        # Parse JSON
         try:
             gpt_response = gpt_response.replace('1-2', '"1-2"')
             prescription = json.loads(gpt_response)
+            logs.append("GPT-4 response parsed as JSON")
             
-            # Ensure all fields are present
             for p in prescription.get("Prescriptions", []):
                 p.setdefault("DiagnosisInformation", {"Diagnosis": None, "Medicine": None})
                 p.setdefault("MedicationDetails", {
-                    "Dose": None,
-                    "DoseUnit": None,
-                    "DoseRoute": None,
-                    "Frequency": None,
-                    "FrequencyDuration": None,
-                    "FrequencyUnit": None,
-                    "Quantity": None,
-                    "QuantityUnit": None,
-                    "Refill": None,
-                    "Pharmacy": None
+                    "Dose": None, "DoseUnit": None, "DoseRoute": None,
+                    "Frequency": None, "FrequencyDuration": None, "FrequencyUnit": None,
+                    "Quantity": None, "QuantityUnit": None, "Refill": None, "Pharmacy": None
                 })
                 p.setdefault("Description", None)
 
             return jsonify({
                 "response": prescription,
-                "transcript": user_input
+                "transcript": user_input,
+                "logs": logs
             })
-            
+
         except json.JSONDecodeError as e:
-            # print("Failed to parse response as JSON:", str(e))
+            logs.append(f"JSON parsing failed: {str(e)}")
             return jsonify({
                 "error": "Failed to generate prescription",
                 "transcript": user_input,
-                "details": str(e)
+                "details": str(e),
+                "logs": logs
             }), 500
 
     except Exception as e:
-        # print("Error in transcription:", str(e))
+        logs.append(f"Audio processing failed: {str(e)}")
         return jsonify({
             "error": "Audio processing failed",
-            "details": str(e)
+            "details": str(e),
+            "logs": logs
         }), 500
 
 
