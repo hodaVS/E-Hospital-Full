@@ -126,11 +126,6 @@ function App() {
     setIsLoading(true);
 
     try {
-        console.log("Audio blob details:", {
-            type: audioBlob.type,
-            size: audioBlob.size
-        });
-
         const formData = new FormData();
         const audioFile = new File([audioBlob], 'recording.wav', {
             type: 'audio/wav',
@@ -138,23 +133,24 @@ function App() {
         });
         formData.append('audio', audioFile);
 
-        console.log("Sending request to server...");
         const response = await axios.post(
             'https://e-hospital-full.onrender.com/transcribe_stream',
             formData,
             {
                 headers: { 'Content-Type': 'multipart/form-data' },
-                timeout: 60000 // Increased timeout
+                timeout: 60000
             }
         );
 
+        // Log server-side messages
+        console.log("Server logs:");
+        response.data.logs.forEach(log => console.log(log));
+
         if (response.data.error) {
-            console.error("Server error:", response.data.error);
-            setError(response.data.error);
+            setError(`${response.data.error}: ${response.data.details || 'No details provided'}`);
             return;
         }
 
-        console.log("Success:", response.data);
         setPrescription(response.data.response);
     } catch (error) {
         console.error("Submission failed:", {
@@ -162,7 +158,14 @@ function App() {
             response: error.response?.data,
             status: error.response?.status
         });
-        setError(error.response?.data?.message || "Audio submission failed");
+        if (error.response?.data?.logs) {
+            console.log("Server logs (error case):");
+            error.response.data.logs.forEach(log => console.log(log));
+        }
+        const errorMessage = error.response?.data?.error
+            ? `${error.response.data.error}: ${error.response.data.details || ''}`
+            : "Audio submission failed";
+        setError(errorMessage);
     } finally {
         setIsLoading(false);
     }
