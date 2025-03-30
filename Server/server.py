@@ -5,10 +5,9 @@ import os
 from openai import OpenAI
 import json
 import logging
-import sqlite3
-from datetime import datetime
 
-# Set up logging
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -465,13 +464,26 @@ def save_prescription():
         return jsonify({"error": "No prescription data provided"}), 400
 
     prescription = data['prescription']
+    save_file = "/data/prescriptions_dataset.json" if os.getenv("RENDER") else "prescriptions_dataset.json"
+    
     try:
-        conn = sqlite3.connect('/data/prescriptions.db' if os.getenv("RENDER") else 'prescriptions.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO prescriptions (prescription, timestamp) VALUES (?, ?)",
-                  (json.dumps(prescription), datetime.now().isoformat()))
-        conn.commit()
-        conn.close()
+        prescriptions = []
+        if os.path.exists(save_file):
+            with open(save_file, 'r') as f:
+                try:
+                    prescriptions = json.load(f)
+                except json.JSONDecodeError:
+                    prescriptions = []
+
+        from datetime import datetime
+        prescription_entry = {
+            "prescription": prescription,
+            "timestamp": datetime.now().isoformat()
+        }
+        prescriptions.append(prescription_entry)
+
+        with open(save_file, 'w') as f:
+            json.dump(prescriptions, f, indent=2)
 
         logger.info(f"Prescription saved successfully: {prescription}")
         return jsonify({"message": f"Prescription for {prescription['DiagnosisInformation']['Medicine']} saved successfully"}), 200
