@@ -14,22 +14,27 @@ function App() {
   const audioRef = useRef(null);
 
   const {
+    status,
     startRecording,
     stopRecording,
     mediaBlobUrl,
-    isRecording,
     error: recorderError
   } = useReactMediaRecorder({
     audio: true,
     onStop: async (blobUrl) => {
       try {
+        console.log('Recording stopped, blob URL:', blobUrl);
         const response = await fetch(blobUrl);
         const blob = await response.blob();
         setAudioBlob(blob);
+        console.log('Blob created successfully:', blob);
       } catch (err) {
         console.error("Blob conversion failed:", err);
         setError("Failed to process recording");
       }
+    },
+    onStart: () => {
+      console.log('Recording started');
     }
   });
 
@@ -40,54 +45,36 @@ function App() {
     }
   }, [recorderError]);
 
-  const handleTextSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  useEffect(() => {
+    console.log('Current status:', status);
+  }, [status]);
 
+  const requestMicPermission = async () => {
     try {
-      const response = await axios.post(
-        'https://e-hospital-full.onrender.com/chat',
-        { text: input },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-
-      if (response.data.error) {
-        setError(response.data.error);
-        return;
-      }
-
-      setPrescription(response.data.response);
-      setInput('');
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setError(error.response?.data?.message || "Failed to send message");
-    } finally {
-      setIsLoading(false);
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      return true;
+    } catch (err) {
+      console.error('Microphone permission denied:', err);
+      setError('Please allow microphone access to record audio');
+      return false;
     }
   };
 
-  const handleRecording = () => {
-    if (isRecording) {
+  const handleRecording = async () => {
+    if (status === 'recording') {
+      console.log('Stopping recording');
       stopRecording();
     } else {
-      startRecording();
-      setAudioBlob(null);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+      console.log('Attempting to start recording');
+      const hasPermission = await requestMicPermission();
+      if (hasPermission) {
+        startRecording();
+        setAudioBlob(null);
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
       }
-    }
-  };
-
-  const handlePlayback = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -98,7 +85,7 @@ function App() {
     }
 
     setError(null);
-    
+    setIsLoading(true); // Add this to show loading state
 
     try {
       const formData = new FormData();
@@ -109,7 +96,7 @@ function App() {
       formData.append('audio', audioFile);
 
       const response = await axios.post(
-        'https://e-hospital-full.onrender.com/transcribe',
+        'https://e-hospital-full.onrender.com/transcribe_stream', // Changed to transcribe_stream endpoint
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -152,7 +139,7 @@ function App() {
         </button>
       </form>
 
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+<div style={{ marginBottom: '20px', textAlign: 'center' }}>
         <button
           onClick={handleRecording}
           style={{ 
@@ -160,7 +147,7 @@ function App() {
             fontSize: '16px', 
             borderRadius: '5px', 
             border: 'none', 
-            backgroundColor: isRecording ? '#dc3545' : '#007bff', 
+            backgroundColor: status === 'recording' ? '#dc3545' : '#007bff', 
             color: '#fff', 
             cursor: 'pointer', 
             marginBottom: '10px', 
@@ -170,7 +157,7 @@ function App() {
             transition: 'background-color 0.3s ease'
           }}
         >
-          {isRecording ? (
+          {status === 'recording' ? (
             <>
               <FaStopCircle /> Stop Recording
             </>
@@ -181,7 +168,7 @@ function App() {
           )}
         </button>
         
-        {isRecording && (
+        {status === 'recording' && (
           <div style={{ 
             height: '100px', 
             backgroundColor: '#f5f5f5', 
