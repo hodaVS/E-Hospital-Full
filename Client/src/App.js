@@ -190,52 +190,53 @@ const handleSave = async (singlePrescription) => {
     setError(error.response?.data?.error || "Failed to save prescription");
   }
 };
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Prescription Chatbot</h1>
-      {error && <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>{error}</div>}
+return (
+  <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+    <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Prescription Chatbot</h1>
+    {error && <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>{error}</div>}
 
-      <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          style={{ flex: 1, padding: '10px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ccc' }}
-        />
-        <button type="submit" style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer' }}>
-          Send
-        </button>
-      </form>
+    {/* Text Input Form - Keep this as a separate form */}
+    <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type your message..."
+        style={{ flex: 1, padding: '10px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ccc' }}
+      />
+      <button type="submit" style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer' }}>
+        Send
+      </button>
+    </form>
 
-      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <button
-          onClick={handleRecording}
-          style={{ 
-            padding: '10px 20px', 
-            fontSize: '16px', 
-            borderRadius: '5px', 
-            border: 'none', 
-            backgroundColor: status === 'recording' ? '#dc3545' : '#007bff', 
-            color: '#fff', 
-            cursor: 'pointer', 
-            marginBottom: '10px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '10px',
-            transition: 'background-color 0.3s ease'
-          }}
-        >
-          {status === 'recording' ? (
-            <>
-              <FaStopCircle /> Stop Recording
-            </>
-          ) : (
-            <>
-              <FaMicrophone /> Start Recording
-            </>
-          )}
-        </button>
+    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+      <button
+        onClick={handleRecording}
+        style={{ 
+          padding: '10px 20px', 
+          fontSize: '16px', 
+          borderRadius: '5px', 
+          border: 'none', 
+          backgroundColor: status === 'recording' ? '#dc3545' : '#007bff', 
+          color: '#fff', 
+          cursor: 'pointer', 
+          marginBottom: '10px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '10px',
+          transition: 'background-color 0.3s ease'
+        }}
+      >
+        {status === 'recording' ? (
+          <>
+            <FaStopCircle /> Stop Recording
+          </>
+        ) : (
+          <>
+            <FaMicrophone /> Start Recording
+          </>
+        )}
+      </button>
         
         {status === 'recording' && (
           <div style={{ 
