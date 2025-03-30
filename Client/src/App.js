@@ -176,29 +176,47 @@ function App() {
   };
 
   const handleSave = () => {
+    // For now, just log the prescription to the console
     console.log("Saving prescription:", prescription);
     alert("Prescription saved to console (placeholder functionality)");
+    // You can extend this to download as a file or save to a backend if needed
   };
 
   return (
-    <div className="app-container">
-      <h1>Prescription Chatbot</h1>
-      {error && <div className="error-message">{error}</div>}
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Prescription Chatbot</h1>
+      {error && <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>{error}</div>}
 
-      <form className="form-container" onSubmit={handleTextSubmit}>
+      <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
+          style={{ flex: 1, padding: '10px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ccc' }}
         />
-        <button type="submit">Send</button>
+        <button type="submit" style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '5px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer' }}>
+          Send
+        </button>
       </form>
 
-      <div className="recording-controls">
+      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
         <button
           onClick={handleRecording}
-          className={`recording-button ${status === 'recording' ? 'recording' : ''}`}
+          style={{ 
+            padding: '10px 20px', 
+            fontSize: '16px', 
+            borderRadius: '5px', 
+            border: 'none', 
+            backgroundColor: status === 'recording' ? '#dc3545' : '#007bff', 
+            color: '#fff', 
+            cursor: 'pointer', 
+            marginBottom: '10px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px',
+            transition: 'background-color 0.3s ease'
+          }}
         >
           {status === 'recording' ? (
             <>
@@ -227,17 +245,30 @@ function App() {
         )}
 
         {mediaBlobUrl && (
-          <div className="audio-controls">
+          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center' }}>
             <audio
               src={mediaBlobUrl}
               ref={audioRef}
               onEnded={() => setIsPlaying(false)}
               style={{ display: 'none' }}
             />
-            <div className="audio-buttons">
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
                 onClick={handlePlayback}
                 disabled={!mediaBlobUrl}
+                style={{ 
+                  padding: '10px 20px', 
+                  fontSize: '16px', 
+                  borderRadius: '5px', 
+                  border: 'none', 
+                  backgroundColor: '#28a745', 
+                  color: '#fff', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px',
+                  opacity: mediaBlobUrl ? 1 : 0.7
+                }}
               >
                 {isPlaying ? <FaStopCircle /> : <FaPlayCircle />}
                 {isPlaying ? 'Stop Playback' : 'Play Audio'}
@@ -245,6 +276,19 @@ function App() {
               <button
                 onClick={handleAudioSubmit}
                 disabled={!audioBlob || isLoading}
+                style={{ 
+                  padding: '10px 20px', 
+                  fontSize: '16px', 
+                  borderRadius: '5px', 
+                  border: 'none', 
+                  backgroundColor: '#28a745', 
+                  color: '#fff', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px',
+                  opacity: (audioBlob && !isLoading) ? 1 : 0.7
+                }}
               >
                 <FaCheckCircle />
                 {isLoading ? 'Submitting...' : 'Submit Audio'}
@@ -255,65 +299,96 @@ function App() {
       </div>
 
       {isLoading && (
-        <div className="loading-indicator">
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
           <div className="spinner"></div>
           <p>Loading...</p>
         </div>
       )}
 
       {prescription && (
-        <div className="prescription-section">
-          <h2 className="prescription-title">Prescriptions</h2>
+        <div style={{ marginTop: '20px' }}>
+          <h2 style={{ color: '#007bff', textAlign: 'center', marginBottom: '20px' }}>Prescriptions</h2>
           {prescription.Prescriptions && Array.isArray(prescription.Prescriptions) ? (
             <div>
               {prescription.Prescriptions.map((item, index) => (
-                <table key={index} className="prescription-table">
+                <table
+                  key={index}
+                  style={{
+                    width: '100%',
+                    marginBottom: '20px',
+                    borderCollapse: 'collapse',
+                    backgroundColor: '#fff',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                    borderRadius: '10px',
+                    overflow: 'hidden'
+                  }}
+                >
                   <thead>
                     <tr>
-                      <th colSpan="2">Prescription {index + 1}</th>
+                      <th colSpan="2" style={{ backgroundColor: '#007bff', color: '#fff', padding: '10px', textAlign: 'center', fontSize: '18px' }}>
+                        Prescription {index + 1}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Diagnosis</td>
-                      <td>{item.DiagnosisInformation.Diagnosis || 'None'}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd', width: '30%' }}>Diagnosis</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Diagnosis || 'None'}</td>
                     </tr>
                     <tr>
-                      <td>Medicine</td>
-                      <td>{item.DiagnosisInformation.Medicine || 'None'}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Medicine</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Medicine || 'None'}</td>
                     </tr>
                     <tr>
-                      <td>Dose</td>
-                      <td>{item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Dose</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</td>
                     </tr>
                     <tr>
-                      <td>Route</td>
-                      <td>{item.MedicationDetails.DoseRoute || 'None'}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Route</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.DoseRoute || 'None'}</td>
                     </tr>
                     <tr>
-                      <td>Frequency</td>
-                      <td>{item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Frequency</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</td>
                     </tr>
                     <tr>
-                      <td>Quantity</td>
-                      <td>{item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Quantity</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</td>
                     </tr>
                     <tr>
-                      <td>Refills</td>
-                      <td>{item.MedicationDetails.Refill || 'None'}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Refills</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Refill || 'None'}</td>
                     </tr>
                     <tr>
-                      <td>Pharmacy</td>
-                      <td>{item.MedicationDetails.Pharmacy || 'None'}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Pharmacy</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Pharmacy || 'None'}</td>
                     </tr>
                     <tr>
-                      <td>Description</td>
-                      <td>{item.Description || 'None'}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Description</td>
+                      <td style={{ padding: '10px' }}>{item.Description || 'None'}</td>
                     </tr>
                   </tbody>
                 </table>
               ))}
-              <button className="save-button" onClick={handleSave}>
+              <button
+                onClick={handleSave}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  borderRadius: '5px',
+                  border: 'none',
+                  backgroundColor: '#17a2b8',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  margin: '20px auto',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#138496'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#17a2b8'}
+              >
                 <FaSave /> Save Prescription
               </button>
             </div>
