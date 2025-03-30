@@ -190,7 +190,6 @@ const handleSave = async (singlePrescription) => {
     setError(error.response?.data?.error || "Failed to save prescription");
   }
 };
-
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Prescription Chatbot</h1>
