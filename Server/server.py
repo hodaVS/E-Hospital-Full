@@ -19,17 +19,6 @@ app = Flask(__name__)
 CORS(app)  
 
 
-def init_db():
-    conn = sqlite3.connect('/data/prescriptions.db' if os.getenv("RENDER") else 'prescriptions.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS prescriptions
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  prescription TEXT NOT NULL,
-                  timestamp TEXT NOT NULL)''')
-    conn.commit()
-    conn.close()
-
-init_db()
 
 
 def transcribe_audio(file_path):
