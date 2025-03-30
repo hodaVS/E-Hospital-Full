@@ -60,6 +60,33 @@ function App() {
     }
   };
 
+  const handleTextSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post(
+        'https://e-hospital-full.onrender.com/chat',
+        { text: input },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      if (response.data.error) {
+        setError(response.data.error);
+        return;
+      }
+
+      setPrescription(response.data.response);
+      setInput('');
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setError(error.response?.data?.message || "Failed to send message");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleRecording = async () => {
     if (status === 'recording') {
       console.log('Stopping recording');
@@ -78,6 +105,17 @@ function App() {
     }
   };
 
+  const handlePlayback = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   const handleAudioSubmit = async () => {
     if (!audioBlob) {
       setError("No audio recorded. Please record again.");
@@ -85,7 +123,7 @@ function App() {
     }
 
     setError(null);
-    setIsLoading(true); // Add this to show loading state
+    setIsLoading(true);
 
     try {
       const formData = new FormData();
@@ -96,7 +134,7 @@ function App() {
       formData.append('audio', audioFile);
 
       const response = await axios.post(
-        'https://e-hospital-full.onrender.com/transcribe_stream', // Changed to transcribe_stream endpoint
+        'https://e-hospital-full.onrender.com/transcribe_stream',
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -139,7 +177,7 @@ function App() {
         </button>
       </form>
 
-<div style={{ marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ marginBottom: '20px', textAlign: 'center' }}>
         <button
           onClick={handleRecording}
           style={{ 
