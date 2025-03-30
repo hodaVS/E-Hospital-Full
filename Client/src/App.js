@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { useReactMediaRecorder } from 'react-media-recorder';
-import { FaMicrophone, FaStopCircle, FaPlayCircle, FaCheckCircle } from 'react-icons/fa';
+import { FaMicrophone, FaStopCircle, FaPlayCircle, FaCheckCircle, FaSave } from 'react-icons/fa';
 import './App.css';
 
 function App() {
@@ -49,7 +49,6 @@ function App() {
     console.log('Current status:', status);
   }, [status]);
 
-  // Debug prescription state changes
   useEffect(() => {
     console.log('Prescription state updated:', prescription);
   }, [prescription]);
@@ -77,7 +76,7 @@ function App() {
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      console.log("Text response:", response.data); // Debug response
+      console.log("Text response:", response.data);
       if (response.data.error) {
         setError(response.data.error);
         return;
@@ -148,7 +147,7 @@ function App() {
         }
       );
 
-      console.log("Audio response:", response.data); // Debug full response
+      console.log("Audio response:", response.data);
       response.data.logs.forEach(log => console.log("Server log:", log));
 
       if (response.data.error) {
@@ -176,9 +175,16 @@ function App() {
     }
   };
 
+  const handleSave = () => {
+    // For now, just log the prescription to the console
+    console.log("Saving prescription:", prescription);
+    alert("Prescription saved to console (placeholder functionality)");
+    // You can extend this to download as a file or save to a backend if needed
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Chatbot</h1>
+      <h1 style={{ textAlign: 'center', color: '#007bff', marginBottom: '20px' }}>Prescription Chatbot</h1>
       {error && <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>{error}</div>}
 
       <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
@@ -300,25 +306,94 @@ function App() {
       )}
 
       {prescription && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-          <h2 style={{ color: '#007bff' }}>Prescription</h2>
+        <div style={{ marginTop: '20px' }}>
+          <h2 style={{ color: '#007bff', textAlign: 'center', marginBottom: '20px' }}>Prescriptions</h2>
           {prescription.Prescriptions && Array.isArray(prescription.Prescriptions) ? (
-            prescription.Prescriptions.map((item, index) => (
-              <div key={index} style={{ marginBottom: '15px' }}>
-                <h3>Prescription {index + 1}</h3>
-                <p><strong>Diagnosis:</strong> {item.DiagnosisInformation.Diagnosis || 'None'}</p>
-                <p><strong>Medicine:</strong> {item.DiagnosisInformation.Medicine || 'None'}</p>
-                <p><strong>Dose:</strong> {item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</p>
-                <p><strong>Route:</strong> {item.MedicationDetails.DoseRoute || 'None'}</p>
-                <p><strong>Frequency:</strong> {item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</p>
-                <p><strong>Quantity:</strong> {item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</p>
-                <p><strong>Refills:</strong> {item.MedicationDetails.Refill || 'None'}</p>
-                <p><strong>Pharmacy:</strong> {item.MedicationDetails.Pharmacy || 'None'}</p>
-                <p><strong>Description:</strong> {item.Description || 'None'}</p>
-              </div>
-            ))
+            <div>
+              {prescription.Prescriptions.map((item, index) => (
+                <table
+                  key={index}
+                  style={{
+                    width: '100%',
+                    marginBottom: '20px',
+                    borderCollapse: 'collapse',
+                    backgroundColor: '#fff',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                    borderRadius: '10px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th colSpan="2" style={{ backgroundColor: '#007bff', color: '#fff', padding: '10px', textAlign: 'center', fontSize: '18px' }}>
+                        Prescription {index + 1}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd', width: '30%' }}>Diagnosis</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Diagnosis || 'None'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Medicine</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.DiagnosisInformation.Medicine || 'None'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Dose</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Dose || 'None'} {item.MedicationDetails.DoseUnit || ''}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Route</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.DoseRoute || 'None'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Frequency</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Frequency || 'None'} for {item.MedicationDetails.FrequencyDuration || 'None'} {item.MedicationDetails.FrequencyUnit || ''}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Quantity</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Quantity || 'None'} {item.MedicationDetails.QuantityUnit || ''}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Refills</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Refill || 'None'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold', borderBottom: '1px solid #ddd' }}>Pharmacy</td>
+                      <td style={{ padding: '10px', borderBottom: '1px solid #ddd' }}>{item.MedicationDetails.Pharmacy || 'None'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Description</td>
+                      <td style={{ padding: '10px' }}>{item.Description || 'None'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              ))}
+              <button
+                onClick={handleSave}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '16px',
+                  borderRadius: '5px',
+                  border: 'none',
+                  backgroundColor: '#17a2b8',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  margin: '20px auto',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#138496'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#17a2b8'}
+              >
+                <FaSave /> Save Prescription
+              </button>
+            </div>
           ) : (
-            <p>No valid prescriptions available.</p>
+            <p style={{ textAlign: 'center' }}>No valid prescriptions available.</p>
           )}
         </div>
       )}
