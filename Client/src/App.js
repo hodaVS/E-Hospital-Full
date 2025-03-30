@@ -116,48 +116,57 @@ function App() {
     }
   };
 
-  const handleAudioSubmit = async () => {
+ const handleAudioSubmit = async () => {
     if (!audioBlob) {
-      setError("No audio recorded. Please record again.");
-      return;
+        setError("No audio recorded. Please record again.");
+        return;
     }
 
     setError(null);
     setIsLoading(true);
 
     try {
-      const formData = new FormData();
-      const audioFile = new File([audioBlob], 'recording.wav', {
-        type: 'audio/wav',
-        lastModified: Date.now()
-      });
-      formData.append('audio', audioFile);
+        console.log("Audio blob details:", {
+            type: audioBlob.type,
+            size: audioBlob.size
+        });
 
-      const response = await axios.post(
-        'https://e-hospital-full.onrender.com/transcribe_stream',
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 30000
+        const formData = new FormData();
+        const audioFile = new File([audioBlob], 'recording.wav', {
+            type: 'audio/wav',
+            lastModified: Date.now()
+        });
+        formData.append('audio', audioFile);
+
+        console.log("Sending request to server...");
+        const response = await axios.post(
+            'https://e-hospital-full.onrender.com/transcribe_stream',
+            formData,
+            {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 60000 // Increased timeout
+            }
+        );
+
+        if (response.data.error) {
+            console.error("Server error:", response.data.error);
+            setError(response.data.error);
+            return;
         }
-      );
 
-      if (response.data.error) {
-        setError(response.data.error);
-        return;
-      }
-
-      setPrescription(response.data.response);
+        console.log("Success:", response.data);
+        setPrescription(response.data.response);
     } catch (error) {
-      console.error("Error sending audio:", {
-        error: error.message,
-        response: error.response?.data
-      });
-      setError(error.response?.data?.message || "Audio submission failed");
+        console.error("Submission failed:", {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+        setError(error.response?.data?.message || "Audio submission failed");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
