@@ -69,7 +69,7 @@ def transcribe_stream():
         return jsonify({"error": "No audio file provided"}), 400
 
     audio_file = request.files['audio']
-    
+    print(f"Audio file name: {audio_file.filename}")
     try:
         # Transcribe the audio stream directly
         transcript = client.audio.transcriptions.create(
