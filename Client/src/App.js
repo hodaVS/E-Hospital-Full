@@ -71,7 +71,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        'https://e-hospital-full.onrender.com/chat',
+        'https://e-hospital-prescription-294a0e858fcd.herokuapp.com/chat',
         { text: input },
         { headers: { 'Content-Type': 'application/json' } }
       );
@@ -139,7 +139,7 @@ function App() {
       formData.append('audio', audioFile);
 
       const response = await axios.post(
-        'https://e-hospital-full.onrender.com/transcribe_stream',
+        'https://e-hospital-prescription-294a0e858fcd.herokuapp.com/transcribe_stream',
         formData,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -183,7 +183,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        'https://e-hospital-full.onrender.com/save_prescription',
+        'https://e-hospital-prescription-294a0e858fcd.herokuapp.com/save_prescription',
         { prescription: prescription },
         { headers: { 'Content-Type': 'application/json' } }
       );
