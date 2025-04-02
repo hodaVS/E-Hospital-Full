@@ -64,33 +64,33 @@ function App() {
     }
   };
 
-    const handleTextSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-  
-    try {
-      const response = await axios.post(
-        'https://e-hospital-prescription-294a0e858fcd.herokuapp.com/chat',
-        { text: input },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-  
-      console.log("Text response:", response.data);  // Logs the prescription object
-      if (response.data.error) {
-        setError(response.data.error);
-        return;
-      }
-  
-      setPrescription(response.data);  // Set directly from response.data
-      setInput('');
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setError(error.response?.data?.detail || "Failed to send message");
-    } finally {
-      setIsLoading(false);
+  const handleTextSubmit = async (e) => {
+  e.preventDefault();
+  setError(null);
+  setIsLoading(true);
+
+  try {
+    const response = await axios.post(
+      'https://e-hospital-prescription-294a0e858fcd.herokuapp.com/chat',
+      { text: input },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    console.log("Text response:", response.data);  // Logs the prescription object
+    if (response.data.error) {
+      setError(response.data.error);
+      return;
     }
-  };
+
+    setPrescription(response.data);  // Set directly from response.data
+    setInput('');
+  } catch (error) {
+    console.error("Error sending message:", error);
+    setError(error.response?.data?.detail || "Failed to send message");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleRecording = async () => {
     if (status === 'recording') {
